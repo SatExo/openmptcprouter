@@ -1,0 +1,58 @@
+name: build
+
+on:
+  push:
+    branches: [hyperg]
+  workflow_dispatch:
+
+concurrency:
+  group: hyperg-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: [self-hosted, hyperg-build]
+    timeout-minutes: 720
+    steps:
+      - name: Checkout (keep warm build caches)
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Read version
+        run: echo "HYPERG_VERSION=$(cat VERSION)" >> "$GITHUB_ENV"
+
+      - name: Secret scan (HyperG commits since v0.65)
+        run: gitleaks detect --source . --no-banner --redact --config .gitleaks.toml --log-opts="v0.65..HEAD"
+
+      - name: Unit tests
+        run: |
+          sh tests/test-hyperg-build-env.sh
+          sh tests/test-sync-www.sh
+
+      - name: Build x86_64
+        run: scripts/hyperg-build.sh x86_64 -j"$(nproc)" > out-build-x86_64.log 2>&1 || { tail -200 out-build-x86_64.log; exit 1; }
+
+      - name: Smoke test x86_64 in QEMU
+        run: sh tests/smoke/boot-x86_64.sh out/"$HYPERG_VERSION"/x86_64/*combined*.img.gz
+
+      - name: Build rpi5
+        run: scripts/hyperg-build.sh rpi5 -j"$(nproc)" > out-build-rpi5.log 2>&1 || { tail -200 out-build-rpi5.log; exit 1; }
+
+      - name: Upload x86_64 image
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyperg-${{ env.HYPERG_VERSION }}-x86_64
+          path: out/${{ env.HYPERG_VERSION }}/x86_64/*combined*.img.gz
+          retention-days: 3
+          if-no-files-found: error
+
+      - name: Upload rpi5 image
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyperg-${{ env.HYPERG_VERSION }}-rpi5
+          path: out/${{ env.HYPERG_VERSION }}/rpi5/*.img.gz
+          retention-days: 3
+          if-no-files-found: error
