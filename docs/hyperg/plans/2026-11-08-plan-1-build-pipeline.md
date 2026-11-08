@@ -33,7 +33,7 @@ This is plan 1 of 6. Each later plan is written when the previous one is done, a
 - Web interface at `/cgi-bin/hyperg/` only; `/cgi-bin/luci/` returns 404. Not reachable from WAN.
 - Image includes `snmpd` + `luci-app-snmpd`, ModemManager (`modemmanager`, `luci-proto-modemmanager`) and RM500 drivers (`kmod-usb-serial-option`, `kmod-usb-net-qmi-wwan`, `kmod-usb-net-cdc-mbim`).
 - HyperG's own settings live in UCI config `/etc/config/hyperg`.
-- Build host: the spare Windows 11 PC (Core i7, 16 GB) stays a Windows PC. Builds run in a **Hyper-V VM** (Ubuntu 24.04 Server, 6 vCPU, 10 GB RAM, 200 GB dynamically expanding disk, nested virtualization on, starts automatically with Windows). If the PC has Windows 11 Home (no Hyper-V), the fallback is WSL2 with the same sizes (Task 2 covers both).
+- Build host: the spare Windows 11 PC (Core i7, 16 GB) stays a Windows PC. Builds run in a **Hyper-V VM** (Ubuntu 24.04 Server, 6 vCPU, 8 GB RAM, 200 GB dynamically expanding disk, nested virtualization on, starts automatically with Windows). If the PC has Windows 11 Home (no Hyper-V), the fallback is WSL2 with the same sizes (Task 2 covers both).
 - Build files stay on the VM's own Linux disk, never on a Windows drive (`/mnt/c`): building there is many times slower and breaks on case-insensitive paths.
 
 ## Review Focus
@@ -147,7 +147,7 @@ git commit -m "build: hyperg branch on OMR v0.65 with pinned build wrapper"
 - Create: `scripts/windows/new-build-vm.ps1`, `scripts/setup-build-host.sh`, `scripts/check-build-host.sh`, `docs/hyperg/build-host.md`
 
 **Interfaces:**
-- Produces: `scripts/windows/new-build-vm.ps1 -IsoPath <ubuntu-24.04-server.iso> [-VhdDir <dir>]` (run by the owner in an elevated PowerShell on the Windows PC). It creates VM `hyperg-build`: Generation 2, Secure Boot template `MicrosoftUEFICertificateAuthority`, 6 vCPU, 10 GB static RAM, 200 GB dynamic VHDX in `-VhdDir` (default `C:\HyperG\vm`), attached to the `Default Switch`, `Set-VMProcessor -ExposeVirtualizationExtensions $true` (nested virtualization, gives the VM `/dev/kvm`), `AutomaticStartAction Start`, `AutomaticStopAction ShutDown`. It refuses with a clear message if Hyper-V is not enabled, or if the VHD drive has under 220 GB free.
+- Produces: `scripts/windows/new-build-vm.ps1 -IsoPath <ubuntu-24.04-server.iso> [-VhdDir <dir>]` (run by the owner in an elevated PowerShell on the Windows PC). It creates VM `hyperg-build`: Generation 2, Secure Boot template `MicrosoftUEFICertificateAuthority`, 6 vCPU, 8 GB static RAM, 200 GB dynamic VHDX in `-VhdDir` (default `C:\HyperG\vm`), attached to the `Default Switch`, `Set-VMProcessor -ExposeVirtualizationExtensions $true` (nested virtualization, gives the VM `/dev/kvm`), `AutomaticStartAction Start`, `AutomaticStopAction ShutDown`. It refuses with a clear message if Hyper-V is not enabled, or if the VHD drive has under 220 GB free.
 - Produces: `scripts/check-build-host.sh` — exits 0 and prints `build host OK` when all checks pass; otherwise prints one `MISSING: <item>` line per failure and exits 1. Checks: OS is Ubuntu 22.04+/Debian 12+; repo is **not** under `/mnt/` (`MISSING: build dir on Linux filesystem`); ≥150 GB free on the repo's filesystem; ≥8 GB RAM (`WARN:` only); commands present: `git gcc g++ make python3 rsync unzip wget curl file gawk perl qemu-system-x86_64 gitleaks sshpass`; prints `INFO: kvm yes|no`.
 
 - [ ] **Step 1: Write `scripts/check-build-host.sh`; run it in a fresh Ubuntu VM or container**
@@ -171,7 +171,7 @@ Check it with `Invoke-ScriptAnalyzer` (PSScriptAnalyzer). Expected: no errors.
      - The VM starts on its own whenever Windows boots; no one needs to log in.
   3. WSL2 path:
      - Run `wsl --install -d Ubuntu-24.04`.
-     - In `%UserProfile%\.wslconfig` set `[wsl2] memory=10GB processors=6 nestedVirtualization=true vmIdleTimeout=-1`.
+     - In `%UserProfile%\.wslconfig` set `[wsl2] memory=8GB processors=6 nestedVirtualization=true vmIdleTimeout=-1`.
      - In the distro's `/etc/wsl.conf` set `[boot] systemd=true`.
      - Add a Windows Task Scheduler task "at startup" running `wsl -d Ubuntu-24.04 --exec sleep infinity`, so WSL keeps running without a login.
   4. Inside Linux:

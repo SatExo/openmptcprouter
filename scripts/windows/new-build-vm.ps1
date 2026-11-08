@@ -3,7 +3,7 @@
     Creates the Hyper-V virtual machine "hyperg-build" that builds HyperG images.
 .DESCRIPTION
     Run once, in an elevated PowerShell on the Windows 11 Pro build PC.
-    The VM gets 6 vCPU, 10 GB RAM, a 200 GB dynamically expanding disk, nested
+    The VM gets 6 vCPU, 8 GB RAM, a 200 GB dynamically expanding disk, nested
     virtualization (so the Linux guest has /dev/kvm for fast image boot tests)
     and starts automatically with Windows.
 .EXAMPLE
@@ -21,7 +21,7 @@ $ErrorActionPreference = 'Stop'
 
 $VmName       = 'hyperg-build'
 $CpuCount     = 6
-$MemoryBytes  = 10GB
+$MemoryBytes  = 8GB   # 10 GB static failed to start on the 16 GB PC (9.8 GB free)
 $DiskBytes    = 200GB
 $MinFreeBytes = 220GB
 $SwitchName   = 'Default Switch'

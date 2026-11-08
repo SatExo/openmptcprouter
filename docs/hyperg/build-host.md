@@ -79,7 +79,7 @@ Use WSL2 instead of steps 2–3's VM, with the same sizes:
 
    ```ini
    [wsl2]
-   memory=10GB
+   memory=8GB
    processors=6
    nestedVirtualization=true
    vmIdleTimeout=-1

@@ -203,7 +203,7 @@ what that means for phase 1:
   trigger builds both targets and the images are downloadable from the run, at no cost. First
   build will take hours on that hardware; later builds reuse the cache.
 - The PC is the spare Windows 11 PC (Core i7, 16 GB), which must stay a Windows PC: builds run in
-  a Linux VM on it (Hyper-V on Pro, WSL2 on Home), 6 vCPU, 10 GB RAM, 200 GB disk, starting
+  a Linux VM on it (Hyper-V on Pro, WSL2 on Home), 6 vCPU, 8 GB RAM, 200 GB disk, starting
   automatically with Windows. Owner's choice; VM sizing is my call.
 - Version string identifies HyperG version + OMR base version.
 
