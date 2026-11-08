@@ -23,7 +23,7 @@ config rule
 	option target 'ACCEPT'
 F
 }
-run() { UCI="uci -c $t" HYPERG_SYNC_WWW=true sh "$DEFAULTS" 2>&1; }
+run() { UCI="uci -c $t" HYPERG_SYNC_WWW=true HYPERG_APPLY_WEB_PATH=feed/hyperg-base/files/usr/libexec/hyperg/apply-web-path sh "$DEFAULTS" 2>&1; }
 get() { uci -c "$t" -q get "$1"; }
 
 fresh; run >/dev/null
@@ -38,6 +38,13 @@ uci -c "$t" set system.@system[0].hostname=Pearl; uci -c "$t" set uhttpd.main.ho
 run >/dev/null
 assert_eq "Pearl" "$(get system.@system[0].hostname)"                       "operator hostname kept"
 assert_eq "/srv/web" "$(get uhttpd.main.home)"                              "operator web root kept"
+
+# luci-base upgrade re-adds /cgi-bin/luci after first boot: the boot-time helper moves it again
+APPLY=feed/hyperg-base/files/usr/libexec/hyperg/apply-web-path
+uci -c "$t" add_list uhttpd.main.ucode_prefix='/cgi-bin/luci=/usr/share/ucode/luci/uhttpd.uc'; uci -c "$t" commit uhttpd
+UCI="uci -c $t" sh "$APPLY"
+assert_eq "/cgi-bin/hyperg=/usr/share/ucode/luci/uhttpd.uc" "$(get uhttpd.main.ucode_prefix)" "re-added luci handler moved at boot"
+assert_eq "/srv/web" "$(get uhttpd.main.home)"                              "boot helper keeps operator web root"
 
 # a rule that opens the web interface to WAN is reported, not changed
 fresh

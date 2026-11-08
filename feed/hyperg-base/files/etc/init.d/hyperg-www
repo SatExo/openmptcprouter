@@ -1,8 +1,10 @@
 #!/bin/sh /etc/rc.common
-# Rebuild the HyperG web root (/www-hyperg) before uhttpd (START=50) starts.
+# Before uhttpd (START=50) starts: keep the interface only at /cgi-bin/hyperg and rebuild
+# the HyperG web root (/www-hyperg).
 START=49
 
 start() {
+	/usr/libexec/hyperg/apply-web-path
 	/usr/libexec/hyperg/sync-www /www /usr/share/hyperg/www-static /www-hyperg
 }
 

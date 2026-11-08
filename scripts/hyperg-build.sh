@@ -7,6 +7,9 @@ set -e
 OMR_BASE_TAG=v0.65
 OMR_BASE_VERSION=0.65
 KERNEL=6.18
+# No online package repository in phase 1: point apk at a name that can never resolve, so
+# `apk add` fails fast instead of installing packages from a different OpenWrt build.
+PACKAGES_URL=http://packages.hyperg.invalid
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
@@ -36,9 +39,11 @@ export CUSTOM_FEED=feed
 export OMR_PACKAGES=full
 export OMR_HOST=localhost
 export OMR_RELEASE="${HYPERG_VERSION}-omr${OMR_BASE_VERSION}"
+export OMR_PACKAGES_URL="$PACKAGES_URL"
+export OMR_REPO="$PACKAGES_URL/release/$OMR_RELEASE-$OMR_KERNEL/$OMR_TARGET"
 
 if [ "$print_only" = yes ]; then
-	for v in CUSTOM_FEED OMR_DIST OMR_FEED_SRC OMR_HOST OMR_KERNEL OMR_PACKAGES OMR_RELEASE OMR_TARGET; do
+	for v in CUSTOM_FEED OMR_DIST OMR_FEED_SRC OMR_HOST OMR_KERNEL OMR_PACKAGES OMR_PACKAGES_URL OMR_RELEASE OMR_REPO OMR_TARGET; do
 		eval "echo $v=\$$v"
 	done | sort
 	exit 0

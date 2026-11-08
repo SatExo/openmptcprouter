@@ -36,7 +36,7 @@ jobs:
         run: scripts/hyperg-build.sh x86_64 -j"$(nproc)" > out-build-x86_64.log 2>&1 || { tail -200 out-build-x86_64.log; exit 1; }
 
       - name: Smoke test x86_64 in QEMU
-        run: sh tests/smoke/boot-x86_64.sh out/"$HYPERG_VERSION"/x86_64/*combined*.img.gz
+        run: sh tests/smoke/boot-x86_64.sh out/"$HYPERG_VERSION"/x86_64/*-squashfs-combined.img.gz
 
       - name: Build rpi5
         run: scripts/hyperg-build.sh rpi5 -j"$(nproc)" > out-build-rpi5.log 2>&1 || { tail -200 out-build-rpi5.log; exit 1; }
@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hyperg-${{ env.HYPERG_VERSION }}-x86_64
-          path: out/${{ env.HYPERG_VERSION }}/x86_64/*combined*.img.gz
+          path: out/${{ env.HYPERG_VERSION }}/x86_64/*-squashfs-combined.img.gz
           retention-days: 3
           if-no-files-found: error
 
@@ -53,6 +53,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hyperg-${{ env.HYPERG_VERSION }}-rpi5
-          path: out/${{ env.HYPERG_VERSION }}/rpi5/*.img.gz
+          path: |
+            out/${{ env.HYPERG_VERSION }}/rpi5/*-squashfs-factory.img.gz
+            out/${{ env.HYPERG_VERSION }}/rpi5/*-squashfs-sysupgrade.img.gz
           retention-days: 3
           if-no-files-found: error

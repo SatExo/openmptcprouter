@@ -39,6 +39,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/uci-defaults/99-hyperg-base $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/etc/init.d/hyperg-www $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/usr/libexec/hyperg/sync-www $(1)/usr/libexec/hyperg/
+	$(INSTALL_BIN) ./files/usr/libexec/hyperg/apply-web-path $(1)/usr/libexec/hyperg/
 	$(INSTALL_BIN) ./files/www-hyperg-static/cgi-bin/hyperg $(1)/usr/share/hyperg/www-static/cgi-bin/
 	$(INSTALL_DATA) ./files/www-hyperg-static/index.html $(1)/usr/share/hyperg/www-static/
 endef

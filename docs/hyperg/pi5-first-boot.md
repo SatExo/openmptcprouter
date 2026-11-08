@@ -4,7 +4,7 @@
 
 - Raspberry Pi 5 with its official power supply, a microSD card (16 GB or more).
 - The rpi5 image from the CI run (artifact `hyperg-<version>-rpi5`) or from the build VM
-  (`~/hg/out/<version>/rpi5/`). Use the `*factory*.img.gz` file if there are several.
+  (`~/hg/out/<version>/rpi5/`). Use the `*-squashfs-factory.img.gz` file.
 - The managed switch, and a laptop.
 
 ## Steps

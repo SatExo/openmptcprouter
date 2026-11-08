@@ -23,7 +23,11 @@ so nobody has to be logged in. Remote access over RDP is enough for every step b
 
    Use `-VhdDir D:\HyperG\vm` to put the disk on another drive.
 4. Start the VM in Hyper-V Manager, connect, install Ubuntu Server:
-   - user name `hgbuild`, tick **Install OpenSSH server**, default disk layout (whole disk);
+   - user name `hgbuild`, tick **Install OpenSSH server**;
+   - storage: *Use an entire disk*, and **untick "Set up this disk as an LVM group"** (the LVM
+     default gives Ubuntu only about half the disk, and the build needs 150 GB free). If it was
+     left ticked, fix it after install with
+     `sudo lvextend -r -l +100%FREE /dev/ubuntu-vg/ubuntu-lv`;
    - after install, remove the ISO:
      `Get-VMDvdDrive -VMName hyperg-build | Set-VMDvdDrive -Path $null`.
 5. Find the VM's address (`ip -4 addr` in the VM console) and from now on use

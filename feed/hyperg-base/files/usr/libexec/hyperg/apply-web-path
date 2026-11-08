@@ -1,0 +1,23 @@
+#!/bin/sh
+# Keep the web interface only at /cgi-bin/hyperg/: move any uhttpd ucode handler registered for
+# /cgi-bin/luci (stock default, or re-added by a luci-base upgrade) to /cgi-bin/hyperg.
+# Called at first boot (uci-defaults) and on every boot before uhttpd (init.d/hyperg-www).
+UCI=${UCI:-uci}
+
+current=$($UCI -q get uhttpd.main.ucode_prefix)
+changed=no
+for entry in $current; do
+	case "$entry" in
+		/cgi-bin/luci=*)
+			moved="/cgi-bin/hyperg=${entry#/cgi-bin/luci=}"
+			$UCI del_list uhttpd.main.ucode_prefix="$entry"
+			case " $current " in
+				*" $moved "*) ;;
+				*) $UCI add_list uhttpd.main.ucode_prefix="$moved" ;;
+			esac
+			changed=yes
+			;;
+	esac
+done
+[ "$changed" = yes ] && $UCI commit uhttpd
+exit 0

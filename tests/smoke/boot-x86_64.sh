@@ -5,12 +5,17 @@
 IMG=$1
 KEEP=$2
 HERE=$(cd "$(dirname "$0")" && pwd)
+. "$HERE/../lib/assert.sh"
 LAN_HTTP=18080
 LAN_SSH=12222
 WAN_HTTP=18081
 TIMEOUT_KVM=180
 TIMEOUT_TCG=900
 
+if [ -n "$KEEP" ] && [ "$KEEP" != "--keep-running" ]; then
+	echo "expected exactly one image, got: $*" >&2
+	exit 2
+fi
 if [ -z "$IMG" ] || [ ! -f "$IMG" ]; then
 	echo "image not found: $IMG" >&2
 	exit 2
@@ -50,7 +55,7 @@ cleanup() {
 }
 
 waited=0
-until [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$LAN_HTTP/cgi-bin/hyperg/")" = 200 ]; do
+until luci_serving "http://127.0.0.1:$LAN_HTTP/cgi-bin/hyperg/"; do
 	if [ "$waited" -ge "$timeout" ] || ! kill -0 "$qemu_pid" 2>/dev/null; then
 		echo "boot timeout after ${waited}s; last console lines:" >&2
 		tail -20 "$work/console.log" >&2

@@ -3,6 +3,7 @@
 # values that are still at their stock setting, so operator changes are kept.
 UCI=${UCI:-uci}
 SYNC_WWW=${HYPERG_SYNC_WWW:-/usr/libexec/hyperg/sync-www}
+APPLY_WEB_PATH=${HYPERG_APPLY_WEB_PATH:-/usr/libexec/hyperg/apply-web-path}
 STOCK_HOME=/www
 HYPERG_HOME=/www-hyperg
 
@@ -10,16 +11,9 @@ HYPERG_HOME=/www-hyperg
 if [ "$($UCI -q get uhttpd.main.home)" = "$STOCK_HOME" ]; then
 	$UCI set uhttpd.main.home="$HYPERG_HOME"
 fi
-# ... and LuCI's in-process ucode handler moved from /cgi-bin/luci to /cgi-bin/hyperg.
-for entry in $($UCI -q get uhttpd.main.ucode_prefix); do
-	case "$entry" in
-		/cgi-bin/luci=*)
-			$UCI del_list uhttpd.main.ucode_prefix="$entry"
-			$UCI add_list uhttpd.main.ucode_prefix="/cgi-bin/hyperg=${entry#/cgi-bin/luci=}"
-			;;
-	esac
-done
 $UCI commit uhttpd
+# ... and LuCI's in-process ucode handler moved from /cgi-bin/luci to /cgi-bin/hyperg.
+UCI="$UCI" sh "$APPLY_WEB_PATH"
 
 case "$($UCI -q get system.@system[0].hostname)" in
 	OpenMPTCProuter|OpenWrt)
