@@ -16,7 +16,8 @@ MY_DEPENDS := \
 	snmpd luci-app-snmpd \
 	modemmanager luci-proto-modemmanager \
 	kmod-usb-serial-option kmod-usb-net-qmi-wwan kmod-usb-net-cdc-mbim \
-	wireguard-tools
+	wireguard-tools \
+	hyperg-base
 
 define Package/$(PKG_NAME)
 SECTION:=HyperG

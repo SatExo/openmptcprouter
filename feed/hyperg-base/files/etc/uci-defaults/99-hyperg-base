@@ -1,0 +1,54 @@
+#!/bin/sh
+# HyperG first-boot defaults. Idempotent: re-run after every sysupgrade, it only changes
+# values that are still at their stock setting, so operator changes are kept.
+UCI=${UCI:-uci}
+SYNC_WWW=${HYPERG_SYNC_WWW:-/usr/libexec/hyperg/sync-www}
+STOCK_HOME=/www
+HYPERG_HOME=/www-hyperg
+
+# Web interface only at /cgi-bin/hyperg/: own web root without cgi-bin/luci ...
+if [ "$($UCI -q get uhttpd.main.home)" = "$STOCK_HOME" ]; then
+	$UCI set uhttpd.main.home="$HYPERG_HOME"
+fi
+# ... and LuCI's in-process ucode handler moved from /cgi-bin/luci to /cgi-bin/hyperg.
+for entry in $($UCI -q get uhttpd.main.ucode_prefix); do
+	case "$entry" in
+		/cgi-bin/luci=*)
+			$UCI del_list uhttpd.main.ucode_prefix="$entry"
+			$UCI add_list uhttpd.main.ucode_prefix="/cgi-bin/hyperg=${entry#/cgi-bin/luci=}"
+			;;
+	esac
+done
+$UCI commit uhttpd
+
+case "$($UCI -q get system.@system[0].hostname)" in
+	OpenMPTCProuter|OpenWrt)
+		$UCI set system.@system[0].hostname=HyperG
+		$UCI commit system
+		;;
+esac
+
+# The web interface must not be reachable from WAN. Report rules that open it; change nothing.
+i=0
+while $UCI -q get "firewall.@rule[$i]" >/dev/null; do
+	src=$($UCI -q get "firewall.@rule[$i].src")
+	dest=$($UCI -q get "firewall.@rule[$i].dest")
+	target=$($UCI -q get "firewall.@rule[$i].target")
+	ports=$($UCI -q get "firewall.@rule[$i].dest_port")
+	if [ "$src" = wan ] && [ -z "$dest" ] && [ "$target" = ACCEPT ]; then
+		for p in $ports; do
+			case "$p" in
+				80|443)
+					name=$($UCI -q get "firewall.@rule[$i].name")
+					msg="warning: firewall rule ${name:-#$i} accepts web from wan (port $p)"
+					echo "$msg" >&2
+					logger -t hyperg "$msg" 2>/dev/null
+					;;
+			esac
+		done
+	fi
+	i=$((i + 1))
+done
+
+"$SYNC_WWW" /www /usr/share/hyperg/www-static "$HYPERG_HOME"
+exit 0

@@ -1,0 +1,48 @@
+#!/bin/sh
+# Build the HyperG web root: mirror <src_www> with symlinks, minus LuCI's own entry point
+# (cgi-bin/luci) and index.html, then lay our static files (cgi-bin/hyperg, index.html) on top.
+#   sync-www <src_www> <static_dir> <dst_root>
+src=$1
+static=$2
+dst=$3
+
+if [ -z "$src" ] || [ -z "$static" ] || [ -z "$dst" ]; then
+	echo "usage: sync-www <src_www> <static_dir> <dst_root>" >&2
+	exit 2
+fi
+
+mkdir -p "$dst/cgi-bin"
+
+# Drop links we made earlier (they point into $src); they are recreated below.
+remove_own_links() {
+	for entry in "$1"/* "$1"/.[!.]*; do
+		[ -L "$entry" ] || continue
+		case "$(readlink "$entry")" in
+			"$src"/*) rm -f "$entry" ;;
+		esac
+	done
+}
+
+# link_entries <from_dir> <to_dir> <name to skip>...
+link_entries() {
+	from=$1
+	to=$2
+	shift 2
+	for entry in "$from"/* "$from"/.[!.]*; do
+		[ -e "$entry" ] || [ -L "$entry" ] || continue
+		name=${entry##*/}
+		skip=no
+		for s in "$@"; do
+			[ "$name" = "$s" ] && skip=yes
+		done
+		[ "$skip" = yes ] && continue
+		[ -e "$to/$name" ] || ln -s "$entry" "$to/$name"
+	done
+}
+
+remove_own_links "$dst"
+remove_own_links "$dst/cgi-bin"
+link_entries "$src" "$dst" cgi-bin index.html
+link_entries "$src/cgi-bin" "$dst/cgi-bin" luci
+cp -R "$static"/. "$dst"/
+exit 0

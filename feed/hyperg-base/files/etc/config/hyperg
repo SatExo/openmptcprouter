@@ -1,0 +1,2 @@
+config hyperg 'main'
+	option version '0.1.0'

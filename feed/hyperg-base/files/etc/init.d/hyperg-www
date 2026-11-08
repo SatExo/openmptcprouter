@@ -1,0 +1,11 @@
+#!/bin/sh /etc/rc.common
+# Rebuild the HyperG web root (/www-hyperg) before uhttpd (START=50) starts.
+START=49
+
+start() {
+	/usr/libexec/hyperg/sync-www /www /usr/share/hyperg/www-static /www-hyperg
+}
+
+stop() {
+	:
+}
