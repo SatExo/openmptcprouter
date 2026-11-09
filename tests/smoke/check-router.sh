@@ -21,14 +21,23 @@ assert_eq yes "$([ "$code" != 404 ] && echo yes || echo no)"   "cgi-download rea
 assert_eq hyperg "$(r '. /etc/openwrt_release; echo $DISTRIB_ID')" "dist id"
 assert_eq HyperG "$(r 'uci get system.@system[0].hostname')"      "hostname default"
 assert_eq 0.1.0  "$(r 'uci get hyperg.main.version')"             "hyperg config"
-assert_eq yes "$(r 'pidof snmpd >/dev/null && echo yes')"         "snmpd running"
+# snmpd starts last (S99) and can come up well after LuCI does; give it up to 120 s (no-KVM boots)
+assert_eq yes "$(r 'i=0; while [ $i -lt 120 ]; do pidof snmpd >/dev/null && { echo yes; exit; }; sleep 2; i=$((i + 2)); done')" "snmpd running"
 assert_eq yes "$(r 'command -v ModemManager >/dev/null && echo yes')" "ModemManager installed"
 assert_eq yes "$(r 'command -v wg >/dev/null && echo yes')"       "wireguard-tools installed"
 assert_eq none "$(r 'grep -rl downloads.openwrt.org /etc/apk 2>/dev/null || echo none')" "no foreign apk feeds"
 if [ -n "$WP" ]; then
-	# only meaningful if WAN is really up on the QEMU user network (10.0.2.0/24)
-	wan_ip=$(r 'ifstatus wan | jsonfilter -e "@[\"ipv4-address\"][0].address"')
-	assert_contains "$wan_ip" "10.0.2." "WAN up for the WAN-side test ($wan_ip)"
+	# OMR ships wan1/wan2 as static macvlans on eth1 with no address (its wizard fills them in), so
+	# put wan1 on DHCP to give it an address on the QEMU user network. The WAN hostfwd targets the
+	# first lease, 10.0.2.15; with any other address "web not reachable from WAN" proves nothing.
+	wan_ip=$(r 'uci set network.wan1.proto=dhcp; uci commit network; /etc/init.d/network reload
+		i=0; while [ $i -lt 60 ]; do
+			a=$(ifstatus wan1 | jsonfilter -e "@[\"ipv4-address\"][0].address")
+			[ -n "$a" ] && { echo "$a"; exit; }
+			sleep 2; i=$((i + 2))
+		done')
+	assert_eq 10.0.2.15 "$wan_ip" "WAN (wan1, DHCP) up for the WAN-side test"
+	assert_eq wan "$(r 'fw4 -q network wan1')" "wan1 in firewall zone wan"
 	assert_http 000 "http://$H:$WP/cgi-bin/hyperg/"             "web not reachable from WAN"
 fi
 # test_defaults_idempotent_and_respect_operator (on the real image copy in /rom; squashfs only)

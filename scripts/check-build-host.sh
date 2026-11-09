@@ -3,7 +3,7 @@
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MIN_DISK_GB=150
 MIN_RAM_GB=8
-TOOLS="git gcc g++ make python3 rsync unzip wget curl file gawk perl qemu-system-x86_64 gitleaks sshpass"
+TOOLS="git gcc g++ make python3 rsync unzip wget curl file gawk perl qemu-system-x86_64 gitleaks sshpass rst2man clang opt llc llvm-dis llvm-strip"
 
 missing=0
 miss() { echo "MISSING: $1"; missing=1; }

@@ -14,7 +14,8 @@ apt-get update
 apt-get install -y \
 	build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git \
 	libncurses-dev libssl-dev python3-setuptools python3-dev rsync swig unzip zlib1g-dev \
-	file wget curl qemu-system-x86 qemu-utils sshpass
+	file wget curl qemu-system-x86 qemu-utils sshpass \
+	python3-docutils llvm
 
 if ! command -v gitleaks >/dev/null 2>&1 || ! gitleaks version 2>/dev/null | grep -q "$GITLEAKS_VERSION"; then
 	tmp=$(mktemp -d)
