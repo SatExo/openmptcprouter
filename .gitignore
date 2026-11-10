@@ -6,3 +6,6 @@ feeds
 /out/
 /.superpowers/
 /out-build-*.log
+# HyperG source overrides copied over the OpenWrt tree by build.sh (the bare "source" rule above
+# is meant for the <target>/<kernel>/source build trees)
+!/feed/source/

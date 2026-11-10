@@ -18,4 +18,10 @@ err_file=$(mktemp)
 scripts/hyperg-build.sh --print-env rpi4 2>"$err_file"; assert_eq 2 $? "bad target exit code"
 assert_contains "$(cat "$err_file")" "unknown target: rpi4" "bad target message"
 rm -f "$err_file"
+# tools/Makefile override (dwarves -> cmake): one copy per target, kept identical
+ovr=feed/source/x86_64/6.18/tools/Makefile
+assert_eq yes "$(cmp -s "$ovr" feed/source/rpi5/6.18/tools/Makefile && echo yes)" "tools/Makefile overrides identical"
+assert_contains "$(cat "$ovr")" '$(curdir)/dwarves/compile += $(curdir)/cmake/compile' "dwarves waits for cmake"
+pin=$(sed -n 's/^TOOLS_MAKEFILE_SHA256=//p' scripts/hyperg-build.sh)
+assert_contains "$(cat "$ovr")" "sha256 $pin" "override names the pinned upstream file"
 finish

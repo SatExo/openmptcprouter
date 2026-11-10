@@ -10,6 +10,8 @@ KERNEL=6.18
 # No online package repository in phase 1: point apk at a name that can never resolve, so
 # `apk add` fails fast instead of installing packages from a different OpenWrt build.
 PACKAGES_URL=http://packages.hyperg.invalid
+# OpenWrt's own tools/Makefile that feed/source/*/6.18/tools/Makefile was made from (checked after the build)
+TOOLS_MAKEFILE_SHA256=8df45eda7e42012d71e75d30dd0049cb7c9cef7dc888e989d2ce87eccf0b30d8
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
@@ -59,6 +61,20 @@ else
 	echo "OMR feed NOT at $OMR_BASE_TAG: $(git -C "$feed_dir" rev-parse --short HEAD)" >&2
 	exit 1
 fi
+
+# feed/source/<target>/<kernel>/tools/Makefile replaces OpenWrt's (adds dwarves -> cmake); it is a
+# whole-file copy, so it is only valid for the upstream file it was made from.
+src="$target/$KERNEL/source"
+have=$(git -C "$src" show HEAD:tools/Makefile | sha256sum | cut -d' ' -f1)
+if [ "$have" != "$TOOLS_MAKEFILE_SHA256" ]; then
+	echo "OpenWrt tools/Makefile changed upstream ($have): refresh feed/source/*/$KERNEL/tools/Makefile" >&2
+	exit 1
+fi
+if ! cmp -s "$CUSTOM_FEED/source/$target/$KERNEL/tools/Makefile" "$src/tools/Makefile"; then
+	echo "tools/Makefile override not applied in $src" >&2
+	exit 1
+fi
+echo "tools/Makefile override applied"
 
 out="out/$HYPERG_VERSION/$target"
 mkdir -p "$out"
